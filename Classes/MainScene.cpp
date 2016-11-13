@@ -55,7 +55,7 @@ void MainScene::addPlayer(const char *altas, int iconIndex, int objIndex)
     }
     KUtilIOS::saveStringValueByKey("Player", "atlas", altas, objIndex);
     KUtilIOS::saveIntValueByKey("Player", "icon", iconIndex, objIndex);
-    KUtilIOS::saveIntValueByKey("Player", "normal_match_coin", 800, objIndex);
+    KUtilIOS::saveIntValueByKey("Player", "normal_match_score", 0, objIndex);
     KUtilIOS::saveIntValueByKey("Player", "normal_match_win_count", 0, objIndex);
     KUtilIOS::saveIntValueByKey("Player", "normal_match_count", 0, objIndex);
 }
@@ -99,7 +99,7 @@ void MainScene::initMyData()
     matchCount = count1;
     std::string atlas = KUtilIOS::getStringValueByKey("Player", "atlas", "小赌神", 0);
     int iconIndex = KUtilIOS::getIntValueByKey("Player", "icon", 0, 0);
-    int normalMatchCoin = KUtilIOS::getIntValueByKey("Player", "normal_match_coin", 0, 0);
+    int normalMatchCoin = KUtilIOS::getIntValueByKey("Player", "normal_match_score", 0, 0);
     int matchCoin = normalMatchCoin;
 #else
     int winMatchCount = 0;

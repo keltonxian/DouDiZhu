@@ -8,7 +8,7 @@
 
 #include "PlayerDDZ.h"
 
-PlayerDDZ* PlayerDDZ::createPlayer(int pid, int side, std::string name, int icon, bool isAi, int coin)
+PlayerDDZ* PlayerDDZ::createPlayer(int pid, int side, std::string name, int icon, bool isAi, int coin, int matchWinCount, int matchCount)
 {
     PlayerDDZ *player = new PlayerDDZ();
     player->autorelease();
@@ -20,6 +20,8 @@ PlayerDDZ* PlayerDDZ::createPlayer(int pid, int side, std::string name, int icon
     player->_isHost = false;
     player->_isCallHost = true; // is case of skip call to grab
     player->_coin = coin;
+    player->_matchWinCount = matchWinCount;
+    player->_matchCount = matchCount;
     return player;
 }
 
@@ -172,6 +174,26 @@ void PlayerDDZ::addCoin(int coin)
 int PlayerDDZ::getCoin()
 {
     return _coin;
+}
+
+void PlayerDDZ::setMatchWinCount(int matchWinCount)
+{
+    _matchWinCount = matchWinCount;
+}
+
+int PlayerDDZ::getMatchWinCount()
+{
+    return _matchWinCount;
+}
+
+void PlayerDDZ::setMatchCount(int matchCount)
+{
+    _matchCount = matchCount;
+}
+
+int PlayerDDZ::getMatchCount()
+{
+    return _matchCount;
 }
 
 

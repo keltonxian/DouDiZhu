@@ -75,10 +75,10 @@ bool DouDiZhu::init()
     coverLeft = KUtil::addSprite(this, KUtil::getPath(F_FRAME, "icon_cover.png"), Point(sidePlayerX-60, cardNumMarkY), ANCHOR_LEFT_UP, 30);
     coverRight = KUtil::addSprite(this, KUtil::getPath(F_FRAME, "icon_cover.png"), Point(FULL_WIDTH-sidePlayerX-60, cardNumMarkY), ANCHOR_LEFT_UP, 30);
     
-    countLeft = KUtil::addLabelBmf(this, "0", "font_num_1.fnt", Point(sidePlayerX-20, cardNumMarkY+5), ANCHOR_LEFT_UP, 30);
+    countLeft = KUtil::addLabelBmf(this, "0", KUtil::getPath(F_FONT, "font_num_1.fnt"), Point(sidePlayerX-20, cardNumMarkY+5), ANCHOR_LEFT_UP, 30);
     countLeft->setScale(2);
     
-    countRight = KUtil::addLabelBmf(this, "0", "font_num_1.fnt", Point(FULL_WIDTH-sidePlayerX-20, cardNumMarkY+5), ANCHOR_LEFT_UP, 30);
+    countRight = KUtil::addLabelBmf(this, "0", KUtil::getPath(F_FONT, "font_num_1.fnt"), Point(FULL_WIDTH-sidePlayerX-20, cardNumMarkY+5), ANCHOR_LEFT_UP, 30);
     countRight->setScale(2);
     
     int btnFontSize = 32;
@@ -143,7 +143,7 @@ bool DouDiZhu::init()
     numMultiple = GameTool::addLabelOutlineDefault(toolbar, "0", 30, Point(230, 15), Color4B(0, 55, 55, 255), Color4B(255, 255, 255, 255), 2, ANCHOR_LEFT_DOWN, 10);
 
     GameTool::addLabelOutlineDefault(toolbar, "时钟", 30, Point(400, 15), Color4B(0, 0, 0, 255), Color4B(255, 255, 255, 255), 2, ANCHOR_LEFT_DOWN, 10);
-    labelClock = KUtil::addLabelBmf(toolbar, "0", "font_num_1.fnt", Point(480, 12), ANCHOR_LEFT_DOWN, 10);
+    labelClock = KUtil::addLabelBmf(toolbar, "0", KUtil::getPath(F_FONT, "font_num_1.fnt"), Point(480, 12), ANCHOR_LEFT_DOWN, 10);
     labelClock->setScale(1.2);
     updateClock(0);
     
@@ -650,6 +650,16 @@ void DouDiZhu::showResult(float delta)
     int base = atoi(baseCoin->getString().c_str());
     int multiple = atoi(numMultiple->getString().c_str());
     int coin = base * multiple;
+    PlayerDDZ *playerWin = nullptr;
+    for (int i = 0; i < playerList.size(); i++) {
+        auto player = playerList.at(i);
+        player->setMatchCount(player->getMatchCount() + 1);
+        if (player->getSide() == winSide) {
+            playerWin = player;
+            continue;
+        }
+    }
+    playerWin->setMatchWinCount(playerWin->getMatchWinCount() + 1);
     auto layer = ResultLayer::create();
     layer->setData(coin, winSide, playerList, CC_CALLBACK_1(DouDiZhu::callbackResult, this));
     KUtil::addLayer(layer, 20, 0);
@@ -959,7 +969,7 @@ void DouDiZhu::addPlayer(PlayerDDZ *player)
 {
     playerList.pushBack(player);
     Point position;
-    if (player->getIcon() < 1 || player->getIcon() > 5) {
+    if (player->getIcon() < 0 || player->getIcon() > 2) {
         CCLOG("ERROR DouDiZhu::addPlayer iconType icon(%d)", player->getIcon());
         return;
     }
@@ -1000,9 +1010,9 @@ PlayerDDZ* DouDiZhu::loadPlayerById(int pid, int side)
     std::string atlas = KUtilIOS::getStringValueByKey("Player", "atlas", "路人", pid);
     int iconIndex = KUtilIOS::getIntValueByKey("Player", "icon", 0, pid);
     int score = KUtilIOS::getIntValueByKey("Player", "normal_match_score", 0, pid);
-//    int matchWinCount = KUtilIOS::getIntValueByKey("Player", "normal_match_win_count", 0, pid);
-//    int matchCount = KUtilIOS::getIntValueByKey("Player", "normal_match_count", 0, pid);
-    auto player = PlayerDDZ::createPlayer(pid, side, atlas, iconIndex, (side==SIDE_DOWN)?false:true, score);
+    int matchWinCount = KUtilIOS::getIntValueByKey("Player", "normal_match_win_count", 0, pid);
+    int matchCount = KUtilIOS::getIntValueByKey("Player", "normal_match_count", 0, pid);
+    auto player = PlayerDDZ::createPlayer(pid, side, atlas, iconIndex, (side==SIDE_DOWN)?false:true, score, matchWinCount, matchCount);
     //Player::createPlayer(pid, atlas, iconIndex, (side==SIDE_DOWN)?false:true, score, matchWinCount, matchCount, side);
     return player;
 #else
@@ -1041,9 +1051,15 @@ void DouDiZhu::initPlayer()
 //    addPlayer(PlayerDDZ::createPlayer(1, SIDE_DOWN, "kelton", 1, false, 100));
 //    addPlayer(PlayerDDZ::createPlayer(2, SIDE_LEFT, "natassa", 2, true, 100));
 //    addPlayer(PlayerDDZ::createPlayer(3, SIDE_RIGHT, "donggua", 3, true, 100));
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    addPlayer(loadPlayerById(0, SIDE_DOWN));
+    addPlayer(loadPlayerById(1, SIDE_LEFT));
+    addPlayer(loadPlayerById(2, SIDE_RIGHT));
+#else
     addPlayer(loadPlayerById(1, SIDE_DOWN));
     addPlayer(loadPlayerById(2, SIDE_LEFT));
     addPlayer(loadPlayerById(3, SIDE_RIGHT));
+#endif
 }
 
 PlayerDDZ* DouDiZhu::getPlayer(int side)
@@ -1339,6 +1355,20 @@ void DouDiZhu::callbackMoveRightSide(Node* pSender)
 
 void DouDiZhu::saveGame()
 {
+#if CC_TARGET_PLATFORM == CC_PLATFORM_IOS || CC_TARGET_PLATFORM == CC_PLATFORM_MAC
+    for (int i = 0; i < playerList.size(); i++) {
+        auto player = playerList.at(i);
+        int pid = player->getPid();
+        //        int side = player->getSide();
+        int score = player->getCoin();
+        int matchWinCount = player->getMatchWinCount();
+        int matchCount = player->getMatchCount();
+        
+        KUtilIOS::saveIntValueByKey("Player", "normal_match_score", score, pid);
+        KUtilIOS::saveIntValueByKey("Player", "normal_match_win_count", matchWinCount, pid);
+        KUtilIOS::saveIntValueByKey("Player", "normal_match_count", matchCount, pid);
+    }
+#else
     int winCount = 0;
     int loseCount = 0;
     auto path = FileUtils::getInstance()->getWritablePath() + SAVE_DATA_1;
@@ -1378,6 +1408,7 @@ void DouDiZhu::saveGame()
     
 //    auto path = FileUtils::getInstance()->getWritablePath() + SAVE_DATA_1;
     FileUtils::getInstance()->writeToFile(saveData, path);
+#endif
 }
 
 bool DouDiZhu::loadGame()
@@ -1562,7 +1593,7 @@ void ResultLayer::setData(int coin, int winSide, Vector<PlayerDDZ *> playerList,
     }
     for (int i = 0; i < playerList.size(); i++) {
         auto player = playerList.at(i);
-        if (player->getIcon() < 1 || player->getIcon() > 5) {
+        if (player->getIcon() < 0 || player->getIcon() > 2) {
             CCLOG("ERROR DouDiZhu::addPlayer iconType icon(%d)", player->getIcon());
             continue;
         }

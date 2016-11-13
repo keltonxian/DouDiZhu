@@ -15,7 +15,7 @@
 
 class PlayerDDZ : public Ref {
 public:
-    static PlayerDDZ* createPlayer(int pid, int side, std::string name, int icon, bool isAi, int coin);
+    static PlayerDDZ* createPlayer(int pid, int side, std::string name, int icon, bool isAi, int coin, int matchWinCount, int matchCount);
     static bool DDZPokerListComparisonLess(PokerDDZ* p1, PokerDDZ* p2);
     int getPid();
     int getSide();
@@ -39,6 +39,10 @@ public:
     bool getIsHost();
     void addCoin(int coin);
     int getCoin();
+    void setMatchWinCount(int matchWinCount);
+    int getMatchWinCount();
+    void setMatchCount(int matchCount);
+    int getMatchCount();
     PlayerDDZ();
     virtual ~PlayerDDZ();
     void printPoker();
@@ -53,6 +57,8 @@ private:
     std::string _name;
     int _pid;
     int _icon;
+    int _matchWinCount;
+    int _matchCount;
     Vector<PokerDDZ *> *_pokerList;
 };
 
